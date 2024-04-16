@@ -13,12 +13,7 @@ import pandas as pd
 
 from data_utils import task_to_keys
 
-def get_sample_ids(path):
-    # we save examples as a .csv file which has an "idx" column
-    df = pd.read_csv(path, sep=",", index_col=0)
-    return df["idx"].values
-
-def _select_subset_by_ids(dataset, indices):
+def _select_subset_by_ids(dataset, indices): # indices is a list or np array here...
     subset = dataset.select(indices)
     return subset
 
@@ -98,7 +93,6 @@ def create_few_shot_context(
         pattern = '{prefix1}: {text1}'
     
     for sample in demonstrations:
-        
         second_key_present = task_to_keys[dataset_name][1]
         formated_sample = pattern.format(
             prefix1=task_to_keys[dataset_name][0].capitalize(),
@@ -111,5 +105,5 @@ def create_few_shot_context(
         else:
             verbalized_label = int_to_label_converter.int2str(sample["label"])
         context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
-
+        
     return context, indices
