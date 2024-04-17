@@ -57,7 +57,7 @@ def create_few_shot_context(
     dataset,
     num_shots,
     teacher_description="",
-    student_description="",
+    student_description="Label if this is entailment or contradiction.",
     remove_label=False,
     from_indices=None,
     balanced=False,
@@ -66,7 +66,6 @@ def create_few_shot_context(
 ):
     separate_description_by = "\n\n"
     separate_shots_by = "\n\n"
-    separate_description_by = "\n\n"
     # select samples from which the context will be constructed
     if from_indices is not None:
         demonstrations = _select_subset_by_ids(dataset, from_indices)
@@ -118,14 +117,14 @@ def create_few_shot_context(
             verbalized_label = ""
         elif current_shot == 1:
             verbalized_label = ""
-            student_context += f"Label if this is entailment or contradiction.\n"
             student_context += (
                 f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
             )
-            student_context += f"{formated_sample}\nLabel:{verbalized_label}"
         else:
             verbalized_label = int_to_label_converter.int2str(sample["label"])
-        context += f"{formated_sample}\nLabel:{verbalized_label}"
+        context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
         current_shot -= 1
 
+    context = context.strip()
+    student_context = student_context.strip()
     return context, student_context, indices
