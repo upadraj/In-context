@@ -47,7 +47,6 @@ def _select_random_subset(dataset, num_shots, balanced=False, seed=123):
     # return _select_subset_by_ids(dataset, indices), indices
     return _select_subset_by_idx(dataset, indices), indices
 
-
 def create_few_shot_context(
     dataset_name,
     dataset,
@@ -60,7 +59,6 @@ def create_few_shot_context(
     seed=123
 ):
     separate_description_by="\n\n"
-    separate_shots_by="\n\n"
     # select samples from which the context will be constructed
     if from_indices is not None:
         demonstrations = _select_subset_by_ids(dataset, from_indices)
@@ -96,10 +94,10 @@ def create_few_shot_context(
         elif current_shot == 1:
             verbalized_label =""
             student_context += f"Label if this is entailment or contradiction.\n"
-            student_context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
+            student_context += f"{formated_sample}\nLabel:{verbalized_label}"
         else:
             verbalized_label = int_to_label_converter.int2str(sample["label"])
-        context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
+        context += f"{formated_sample}\nLabel:{verbalized_label}"
         current_shot -= 1
         
     return context, student_context, indices
