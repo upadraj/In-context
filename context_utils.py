@@ -3,16 +3,6 @@ import pandas as pd
 
 from data_utils import task_to_keys
 
-# --pattern "{text1} {text2} ?" \
-# --target_prefix " " \
-# --target_tokens "ĠYes,ĠNo" \
-# --separate_shots_by "\n\n" \
-
-import numpy as np
-import pandas as pd
-
-from data_utils import task_to_keys
-
 def _select_subset_by_ids(dataset, indices): # indices is a list or np array here...
     subset = dataset.select(indices)
     return subset
@@ -85,13 +75,14 @@ def create_few_shot_context(
 
     # create context
     context = "" if description == "" else f"{description}{separate_description_by}"
+    student_context = "" if description == "" else f"{description}{separate_description_by}"
     int_to_label_converter = dataset.features['label']
 
     if task_to_keys[dataset_name][1] is not None:
-        pattern = '{prefix1}: {text1}\n{prefix2}: {text2}'
+        pattern = '{prefix1}: {text1},\n{prefix2}: {text2},'
     else:
         pattern = '{prefix1}: {text1}'
-    
+    current_shot = num_shots
     for sample in demonstrations:
         second_key_present = task_to_keys[dataset_name][1]
         formated_sample = pattern.format(
@@ -102,8 +93,13 @@ def create_few_shot_context(
         )
         if sample["label"] == -1 or remove_label:
             verbalized_label = ""
+        elif current_shot == 1:
+            verbalized_label =""
+            student_context += f"Label if this is entailment or contradiction.\n"
+            student_context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
         else:
             verbalized_label = int_to_label_converter.int2str(sample["label"])
         context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
+        current_shot -= 1
         
-    return context, indices
+    return context, student_context, indices
