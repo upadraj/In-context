@@ -219,6 +219,7 @@ def load_paws_qqp_dataset(path, label=None):
 
     dataset = dataset.map(_clean_data, batched=False)
     dataset = dataset.rename_column("id", "idx")
+    dataset = dataset.cast_column("label", ClassLabel(names = ['non_duplicate','duplicate']))
 
     if label is not None:  # filter dataset based on label
         dataset = dataset.filter(
