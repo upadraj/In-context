@@ -123,7 +123,6 @@ def create_few_shot_context(
         else:
             verbalized_label = int_to_label_converter.int2str(sample["label"])
         context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
-        context += f"{formated_sample}\nLabel: {verbalized_label}{separate_shots_by}"
         current_shot -= 1
 
     context = context.strip()
