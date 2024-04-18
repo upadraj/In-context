@@ -57,7 +57,7 @@ def create_few_shot_context(
     dataset,
     num_shots,
     teacher_description="",
-    student_description="Label if this is entailment or contradiction.",
+    student_description="Are the following sentences examples of entailment, yes or no?",
     remove_label=False,
     from_indices=None,
     balanced=False,
