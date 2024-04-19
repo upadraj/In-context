@@ -52,32 +52,49 @@ def _select_random_subset(dataset, num_shots, balanced=False, seed=123):
     return _select_subset_by_idx(dataset, indices), indices
 
 
-def create_few_shot_context(
-    dataset_name,
+def select_demonstrations(
     dataset,
-    num_shots,
-    teacher_description="",
-    student_description="Are the following sentences examples of entailment, yes or no?",
-    remove_label=False,
-    from_indices=None,
     balanced=False,
     shuffle=False,
+    from_indices=None,
+    from_idxlabels=None,
+    rand_subset=False,
+    num_shots=16,
     seed=123,
 ):
-    separate_description_by = "\n\n"
-    separate_shots_by = "\n\n"
-    # select samples from which the context will be constructed
     if from_indices is not None:
         demonstrations = _select_subset_by_ids(dataset, from_indices)
         indices = np.array(from_indices)
-    else:
+    elif from_idxlabels is not None:
+        demonstrations = _select_subset_by_idx(dataset, from_idxlabels)
+        indices = np.array(from_idxlabels)
+    elif rand_subset:
         demonstrations, indices = _select_random_subset(
             dataset, num_shots, balanced, seed
         )
+    else:
+        demonstrations = dataset
+        indices = np.array(dataset["idx"])
 
     if shuffle:
         if len(demonstrations) > 0:
-            demonstrations = demonstrations.shuffle(seed)
+            demonstrations = demonstrations.shuffle(seed + 1)
+
+    return demonstrations, indices
+
+
+def create_few_shot_context(
+    dataset_name,
+    demonstrations,
+    int_to_label_converter,  # dataset.features["label"]
+    teacher_description="",
+    student_description="Are the following sentences examples of entailment, yes or no?",
+    remove_label=False,
+    pattern_name="default",
+):
+    # TODO: ? add support for more patterns
+    separate_description_by = "\n\n"
+    separate_shots_by = "\n\n"
 
     # create context
     context = (
@@ -90,27 +107,21 @@ def create_few_shot_context(
         if student_description == ""
         else f"{student_description}{separate_description_by}"
     )
-    int_to_label_converter = dataset.features["label"]
 
-    if task_to_keys[dataset_name][1] is not None:
-        pattern = "{prefix1}: {text1},\n{prefix2}: {text2},"
+    if pattern_name == "explanation":
+        pattern = "{prefix1}: {text1}\n{prefix2}: {text2}\nExplanation: {explanation}"
     else:
-        pattern = "{prefix1}: {text1}"
-    current_shot = num_shots
+        pattern = "{prefix1}: {text1}\n{prefix2}: {text2}"
+
+    current_shot = len(demonstrations)
     for sample in demonstrations:
-        second_key_present = task_to_keys[dataset_name][1]
         formated_sample = pattern.format(
             prefix1=task_to_keys[dataset_name][0].capitalize(),
             text1=sample[task_to_keys[dataset_name][0]],
-            prefix2=(
-                task_to_keys[dataset_name][1].capitalize()
-                if second_key_present is not None
-                else None
-            ),
-            text2=(
-                sample[task_to_keys[dataset_name][1]]
-                if second_key_present is not None
-                else None
+            prefix2=task_to_keys[dataset_name][1].capitalize(),
+            text2=sample[task_to_keys[dataset_name][1]],
+            explanation=(
+                sample["explanation"] if "explanation" in sample.keys() else None
             ),
         )
         if sample["label"] == -1 or remove_label:
@@ -127,4 +138,4 @@ def create_few_shot_context(
 
     context = context.strip()
     student_context = student_context.strip()
-    return context, student_context, indices
+    return context, student_context
