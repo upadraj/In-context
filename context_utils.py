@@ -49,7 +49,7 @@ def _select_random_subset(dataset, num_shots, balanced=False, seed=123):
         indices = np.random.choice(dataset["idx"], size=num_shots, replace=False)
 
     # return _select_subset_by_ids(dataset, indices), indices
-    return _select_subset_by_idx(dataset, indices), indices
+    return _select_subset_by_idx(dataset, indices)
 
 
 def select_demonstrations(
@@ -64,22 +64,20 @@ def select_demonstrations(
 ):
     if from_indices is not None:
         demonstrations = _select_subset_by_ids(dataset, from_indices)
-        indices = np.array(from_indices)
     elif from_idxlabels is not None:
         demonstrations = _select_subset_by_idx(dataset, from_idxlabels)
-        indices = np.array(from_idxlabels)
     elif rand_subset:
-        demonstrations, indices = _select_random_subset(
+        demonstrations = _select_random_subset(
             dataset, num_shots, balanced, seed
         )
     else:
         demonstrations = dataset
-        indices = np.array(dataset["idx"])
 
     if shuffle:
         if len(demonstrations) > 0:
             demonstrations = demonstrations.shuffle(seed + 1)
 
+    indices = np.array(demonstrations["idx"])
     return demonstrations, indices
 
 
