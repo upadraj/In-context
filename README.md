@@ -24,3 +24,13 @@ More on that later ...
 ### Experiments
 
 Create a google spreadsheets for saving experiments results [ experiments spreadsheet](https://docs.google.com/spreadsheets/d/1BLfHYF82zIWzG5Pt61NzQcoxZ8JO8AURXzfixBKN7Ok/edit#gid=0)
+
+### Models
+
+- [facebook/opt-125m](https://huggingface.co/facebook/opt-125m)
+- [facebook/opt-350m](https://huggingface.co/facebook/opt-350m)
+- [facebook/opt-1.3b](https://huggingface.co/facebook/opt-1.3b)
+- [facebook/opt-2.7b](https://huggingface.co/facebook/opt-2.7b)
+- [facebook/opt-6.7b](https://huggingface.co/facebook/opt-6.7b)
+- [facebook/opt-13b](https://huggingface.co/facebook/opt-13b)
+- [facebook/opt-30b](https://huggingface.co/facebook/opt-30b)
