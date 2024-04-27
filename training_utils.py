@@ -131,8 +131,7 @@ def train(teacher_model, student_model, data, epochs=10, batch_size=32, device='
             batch_loss /= batch_size
             total_loss += batch_loss
             scheduler.step()
-            #print(f"Epoch {epoch + 1}, Batch {i + 1}, Average Loss: {batch_loss}")
-
+            # print(f"Epoch {epoch + 1}, Batch {i + 1}, Average Loss: {batch_loss}")
 
         # Average loss for the epoch
         epoch_loss = total_loss / num_batches
