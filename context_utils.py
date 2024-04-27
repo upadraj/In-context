@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from datasets import concatenate_datasets
+
 from data_utils import task_to_keys
 
 
@@ -13,6 +15,9 @@ def _select_subset_by_idx(dataset, indices):
     dataset = dataset.filter(lambda s: s["idx"] in indices)
     return dataset
 
+def _filter_subset_by_idx(dataset,indices):
+    dataset = dataset.filter(lambda s: s["idx"] not in indices)
+    return dataset
 
 def get_balanced_subsets(dataset):
     subset_per_label = {}
@@ -61,7 +66,10 @@ def select_demonstrations(
     rand_subset=False,
     num_shots=16,
     seed=123,
+    filter_out_idx=None
 ):
+    if filter_out_idx:
+        dataset = _filter_subset_by_idx(dataset, filter_out_idx)
     if from_indices is not None:
         demonstrations = _select_subset_by_ids(dataset, from_indices)
     elif from_idxlabels is not None:
@@ -137,3 +145,45 @@ def create_few_shot_context(
     context = context.strip()
     student_context = student_context.strip()
     return context, student_context
+
+def create_train_batch_token(
+    dataset_name,
+    datasets,
+    tokenizer,
+    seed,
+    teacher_description="",
+    student_description="Are the following sentences examples of entailment, yes or no?",
+    num_shots=16,
+    device = 'cpu',
+    num_train_samps=100,
+):
+    datasets = datasets['train']
+    
+    batch_tokens = []
+    batch_strings = []
+    all_indices = []
+    
+    contexts, context_indices = select_demonstrations(datasets,balanced=True,rand_subset=True,num_shots=num_shots,seed=seed)
+    _ , candidate_indices = select_demonstrations(datasets,filter_out_idx=context_indices.tolist())
+    for samp in np.random.choice(candidate_indices,num_train_samps, replace=False).tolist():
+        demonstrations = datasets.filter(lambda r: r['idx'] == samp)
+        complete_set = concatenate_datasets([contexts,demonstrations])
+        context, student_context = create_few_shot_context(
+            dataset_name,
+            complete_set,
+            complete_set.features['label'],
+            teacher_description=teacher_description,
+            student_description=student_description,
+        )
+        token_data= {
+            'context':(tokenizer(context, return_tensors="pt")).to(device),
+            'query':(tokenizer(student_context, return_tensors="pt")).to(device)
+        }
+        string_data = {
+            'context':context,
+            'query':student_context
+        }
+        batch_tokens.append(token_data)
+        batch_strings.append(string_data)
+        all_indices.append(samp)            
+    return batch_tokens, batch_strings, all_indices, context_indices
