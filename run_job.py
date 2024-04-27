@@ -34,7 +34,6 @@ from training_utils import (
     plot_losses,
     train,
     predict,
-    run_job
 )
 
 def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, seed):
@@ -103,9 +102,10 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
 seed = 2     
 data_set_used = 'mnli'
 model_name = "opt-125m"
-epochs = 2
-val_len = 128
-train_len = 128
+epochs = 40
+val_len = 1000
+train_len = 1032
 context_len = 16
 
-run_job(data_set_used,model_name,epochs,val_len, train_len, context_len, seed)
+for seed in range(10):
+    run_job(data_set_used,model_name,epochs,val_len, train_len, context_len, seed)
