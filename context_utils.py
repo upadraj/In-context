@@ -187,3 +187,37 @@ def create_train_batch_token(
         batch_strings.append(string_data)
         all_indices.append(samp)            
     return batch_tokens, batch_strings, all_indices, context_indices
+
+def create_validation_batch_token(
+    dataset_name,
+    datasets,
+    tokenizer,
+    device = 'cpu',
+    prompt_descr="Are the following sentences examples of entailment, yes or no?",
+    limit=10
+):
+    if dataset_name == 'mnli':
+        split = 'validation_matched'
+    else:
+        split = 'validation'
+        
+    datasets = datasets[split]
+    
+    demonstrations, all_indices = select_demonstrations(datasets)
+    batch_tokens = []
+    batch_strings = []
+    for dx in range(limit):
+        context, _ = create_few_shot_context(
+            dataset_name,
+            [demonstrations[dx]],
+            demonstrations.features['label'],
+            teacher_description=prompt_descr,
+            remove_label=True
+        )
+        token_data = (tokenizer(context, return_tensors="pt")).to(device)
+        batch_tokens.append(token_data)
+        batch_strings.append(context)
+
+    labels = [datasets['label'][datasets['idx'].index(i)] for i in all_indices]
+    labels = datasets.features['label'].int2str(labels)
+    return batch_tokens, batch_strings, all_indices[:limit],labels[:limit]
