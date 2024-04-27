@@ -153,53 +153,6 @@ def predict(model, source,tokenizer, target=None, device='cpu'):
         predict.append(predicted_label)
         
     return predict
-
-def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, seed):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    datasets, labels, num_labels, teacher_prompt, student_prompt = get_dataset(data_set_used)
-    
-    set_seed(seed)
-    print('starting run: {}'.format(seed))
-    print('loading model')
-    tokenizer, student_model, teacher_model = get_model(model_name)
-    print("finished loading model")
-
-    print("loading data")
-    train_data_tokens, train_data_strings, indices, context_indices = create_train_batch_token(
-        data_set_used, 
-        datasets, 
-        teacher_description = teacher_prompt, 
-        student_description = student_prompt, 
-        tokenizer=tokenizer, 
-        seed=seed, 
-        device=device,
-        num_shots = context_len,
-        num_train_samps=train_len,
-    )
-    print("finished loading data")
-
-    print("training model")
-    train(teacher_model, student_model, train_data_tokens, epochs = epochs, device=device)
-    print("finished training model")
-
-    print("predicting on validation set")
-    student_prompt_tokens, student_prompt_strings, all_indices, all_labels = create_validation_batch_token(
-        data_set_used, datasets, prompt_descr=student_prompt ,tokenizer=tokenizer, device=device, limit=100
-    )
-    prediction = predict(student_model, student_prompt_tokens, tokenizer = tokenizer, device=device)  
-    print("finished predicting on validation set")
-
-    accuracy = accuracy_score(prediction,all_labels)
-    print("finished run {}".format(seed))
-    print("final result",accuracy)
-
-    if not os.path.exists('output'):
-        os.makedirs('output')
-        
-    file_name = f'{model_type}_{seed}_{epochs}_{val_len}_{train_len}_{context_len}.csv'
-    file_loc = os.path.join('output',file_name)
-    with open(file_loc,'w') as f:
-        f.write(accuracy)
         
 
         
