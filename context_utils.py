@@ -167,11 +167,10 @@ def create_train_batch_token(
     candidates , candidate_indices = select_demonstrations(datasets,filter_out_idx=context_indices.tolist())
     candidates_chosen = np.random.choice(candidate_indices,num_train_samps, replace=False).tolist()
     chosen_candidates , chosen_indices = select_demonstrations(datasets,from_idxlabels=candidates_chosen)
-    print(chosen_candidates)
+
     for samp in candidates_chosen:
         demonstrations = chosen_candidates.filter(lambda r: r['idx'] == samp)
         complete_set = concatenate_datasets([contexts,demonstrations])
-        print(complete_set)
         context, student_context = create_few_shot_context(
             dataset_name,
             complete_set,
