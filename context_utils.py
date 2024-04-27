@@ -155,7 +155,7 @@ def create_train_batch_token(
     student_description="Are the following sentences examples of entailment, yes or no?",
     num_shots=16,
     device = 'cpu',
-    num_train_samps=100,
+    num_train_samps=128,
 ):
     datasets = datasets['train']
     
@@ -194,7 +194,7 @@ def create_validation_batch_token(
     tokenizer,
     device = 'cpu',
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
-    limit=10
+    limit=128
 ):
     if dataset_name == 'mnli':
         split = 'validation_matched'
