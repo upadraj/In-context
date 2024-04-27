@@ -151,8 +151,8 @@ def create_train_batch_token(
     datasets,
     tokenizer,
     seed,
-    teacher_descr,
-    student_descr,
+    teacher_description="",
+    student_description="Are the following sentences examples of entailment, yes or no?",
     num_shots=16,
     device = 'cpu',
     num_train_samps=100,
@@ -172,8 +172,8 @@ def create_train_batch_token(
             dataset_name,
             complete_set,
             complete_set.features['label'],
-            teacher_description=teacher_descr,
-            student_description=student_descr,
+            teacher_description=teacher_description,
+            student_description=student_description,
         )
         token_data= {
             'context':(tokenizer(context, return_tensors="pt")).to(device),
