@@ -66,26 +66,41 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
     print("finished training model")
 
     print("predicting on validation set")
-    student_prompt_tokens, student_prompt_strings, all_indices, all_labels = create_validation_batch_token(
+    student_prompt_tokens, student_prompt_strings, val_indices, val_labels = create_validation_batch_token(
         data_set_used, datasets, prompt_descr=student_prompt ,tokenizer=tokenizer, device=device, limit=100
     )
     prediction = predict(student_model, student_prompt_tokens, tokenizer = tokenizer, device=device)  
     print("finished predicting on validation set")
 
-    accuracy = accuracy_score(prediction,all_labels)
+    accuracy = accuracy_score(prediction,val_labels)
     print("finished run {}".format(seed))
     print("final result",accuracy)
 
     if not os.path.exists('output'):
         os.makedirs('output')
         
-    file_name = f'{model_type}_{seed}_{epochs}_{val_len}_{train_len}_{context_len}.csv'
-    file_loc = os.path.join('output',file_name)
-    with open(file_loc,'w') as f:
-        f.write(accuracy)
-        
+    meta_data_file_name = f'{dataset_used}_{model_name}_{seed}_{epochs}_{val_len}_{train_len}_{context_len}.json'
+    metadata_loc = os.path.join('output',meta_data_file_name)
+    metadata = {
+        'accuracy': accuracy,
+        'query_indices': indices,
+        'context_indices': context_indices.tolist(),
+        'validation_indices': val_indices.tolist(),
+        'model_name': model_name,
+        'dataset_used': dataset_used,
+        'seed': seed,
+        'epochs': epochs,
+        'val_len': val_len,
+        'train_len': train_len,
+        'context_len': context_len
+    }
+    
+    with open(metadata_loc, 'w') as f:
+        json.dump(metadata, f)
 
-seed = 1        
+    return None
+
+seed = 2     
 data_set_used = 'mnli'
 model_name = "opt-125m"
 epochs = 2
