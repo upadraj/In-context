@@ -121,15 +121,26 @@ def create_few_shot_context(
 
     current_shot = len(demonstrations)
     for sample in demonstrations:
-        formated_sample = pattern.format(
-            prefix1=task_to_keys[dataset_name][0].capitalize(),
-            text1=sample[task_to_keys[dataset_name][0]],
-            prefix2=task_to_keys[dataset_name][1].capitalize(),
-            text2=sample[task_to_keys[dataset_name][1]],
-            explanation=(
-                sample["explanation"] if "explanation" in sample.keys() else None
-            ),
-        )
+        if dataset_name == 'paws-qqp':
+            formated_sample = pattern.format(
+                prefix1="Question1",
+                text1=sample[task_to_keys[dataset_name][0]],
+                prefix2="Question2",
+                text2=sample[task_to_keys[dataset_name][1]],
+                explanation=(
+                    sample["explanation"] if "explanation" in sample.keys() else None
+                ),
+            )
+        else:
+            formated_sample = pattern.format(
+                prefix1=task_to_keys[dataset_name][0].capitalize(),
+                text1=sample[task_to_keys[dataset_name][0]],
+                prefix2=task_to_keys[dataset_name][1].capitalize(),
+                text2=sample[task_to_keys[dataset_name][1]],
+                explanation=(
+                    sample["explanation"] if "explanation" in sample.keys() else None
+                ),
+            )
         student_label = ""
         if sample["label"] == -1 or remove_label:
             verbalized_label = ""
@@ -210,6 +221,7 @@ def create_validation_batch_token(
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
     limit=128,
     shuffle=False,
+    seed=42
 ):
     if dataset_name == "mnli":
         split = "validation_matched"
@@ -218,7 +230,10 @@ def create_validation_batch_token(
 
     datasets = datasets[split]
 
-    demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle)
+    if shuffle:
+        demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle,seed=seed)
+    else:
+        demonstrations, all_indices = select_demonstrations(datasets)
     batch_tokens = []
     batch_strings = []
     for dx in range(limit):
@@ -245,10 +260,12 @@ def create_paws_qqp_batch_token(
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
     limit=128,
     shuffle=False,
+    seed=42
 ):
-    datasets = datasets["validation"]
-
-    demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle)
+    if shuffle:
+        demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle,seed=seed)
+    else:
+        demonstrations, all_indices = select_demonstrations(datasets)
     batch_tokens = []
     batch_strings = []
     for dx in range(limit):
@@ -274,15 +291,17 @@ def create_hans_batch_token(
     device="cpu",
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
     limit=128,
-    shuffle=False,
+    shuffle=True,
+    seed=42
 ):
-    datasets = datasets["validation"]
-
-    demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle)
+    if shuffle:
+        demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle,seed=seed)
+    else:
+        demonstrations, all_indices = select_demonstrations(datasets)
     batch_tokens = []
     batch_strings = []
     for dx in range(limit):
-        context, _ = create_few_shot_context(
+        context, _, _ = create_few_shot_context(
             "hans",
             [demonstrations[dx]],
             demonstrations.features["label"],

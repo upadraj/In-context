@@ -9,7 +9,7 @@ task_to_keys = {
     "hans": ("premise", "hypothesis"),
     # labels are: 0 (not_duplicate), 1 (duplicate)
     "qqp": ("question1", "question2"),
-    "paws-qqp": ("question1", "question2"),
+    "paws-qqp": ("sentence1", "sentence2"),
 }
 
 
