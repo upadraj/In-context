@@ -14,7 +14,7 @@ from peft import LoraConfig, get_peft_model
 from context_utils import (
     create_validation_batch_token,
     create_train_batch_token,
-    # create_hans_batch_token,
+    create_hans_batch_token,
     create_paws_qqp_batch_token,
 )
 from data_utils import (
@@ -22,7 +22,6 @@ from data_utils import (
     load_paws_qqp_dataset,
     get_dataset,
 )
-
 
 def set_seed(seed):
     random.seed(seed)
@@ -197,6 +196,7 @@ def get_validation_accuracy(
     val_len=1000,
     shuffle=False,
     indomain=True,
+    seed=42
 ):
 
     if indomain:
@@ -211,17 +211,6 @@ def get_validation_accuracy(
                 shuffle=shuffle,
             )
         )
-    # elif dataset_used in ["mnli", "rte"] and not indomain:
-    #     student_prompt_tokens, student_prompt_strings, val_indices, val_labels = (
-    #         create_hans_batch_token(
-    #             datasets,
-    #             tokenizer=tokenizer,
-    #             device=device,
-    #             prompt_descr=student_prompt,
-    #             limit=val_len,
-    #             shuffle=shuffle,
-    #         )
-    #     )
     elif dataset_used == "qqp" and not indomain:
         student_prompt_tokens, student_prompt_strings, val_indices, val_labels = (
             create_paws_qqp_batch_token(
@@ -233,8 +222,21 @@ def get_validation_accuracy(
                 shuffle=shuffle,
             )
         )
+    elif dataset_used in ["mnli","rte"] and not indomain:
+        student_prompt_tokens, student_prompt_strings, val_indices, val_labels = (
+            create_hans_batch_token(
+                datasets,
+                tokenizer=tokenizer,
+                device=device,
+                prompt_descr=student_prompt,
+                limit=val_len,
+                shuffle=shuffle,
+                seed=seed
+            )
+        )
+    else:
+        raise Exception("no dataset found for validation...")
 
-    print(f"student_prompt_tokens:{student_prompt_tokens[0]}")
     prediction = predict(
         student_model, student_prompt_tokens, tokenizer=tokenizer, device=device
     )
@@ -248,7 +250,6 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
     datasets, labels, num_labels, teacher_prompt, student_prompt = get_dataset(
         dataset_used
     )
-
     set_seed(seed)
     print("starting run: {}".format(seed))
     print("loading model")
@@ -282,7 +283,6 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
     print("finished training model")
 
     print("predicting teacher on validation set")
-    print(f"train_data_tokens:{train_data_tokens[0]}")
     t_predict = predict(
         teacher_model,
         [tdt["context"] for tdt in train_data_tokens],
@@ -316,7 +316,7 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
             student_model=student_model,
             student_prompt=student_prompt,
             tokenizer=tokenizer,
-            datasets=datasets,
+            datasets=dataset,
             dataset_used=dataset_used,
             device=device,
             val_len=val_len,
@@ -333,12 +333,13 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
             student_model=student_model,
             student_prompt=student_prompt,
             tokenizer=tokenizer,
-            datasets=datasets,
+            datasets=dataset,
             dataset_used=dataset_used,
             device=device,
             val_len=val_len,
             shuffle=True,
             indomain=False,
+            seed=seed,
         )
         print("finished run ood {}".format(seed))
         print("final result", ood_accuracy)
