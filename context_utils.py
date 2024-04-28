@@ -302,29 +302,3 @@ def create_paws_qqp_batch_token(
     labels = [datasets['label'][datasets['idx'].index(i)] for i in all_indices]
     labels = datasets.features['label'].int2str(labels)
     return batch_tokens, batch_strings, all_indices[:limit],labels[:limit]
-
-def create_hans_batch_token(
-    datasets,
-    tokenizer,
-    device = 'cpu',
-    prompt_descr="Are the following sentences examples of entailment, yes or no?",
-    limit=128
-):
-    demonstrations, all_indices = select_demonstrations(datasets)
-    batch_tokens = []
-    batch_strings = []
-    for dx in range(limit):
-        context, _ = create_few_shot_context(
-            'hans',
-            [demonstrations[dx]],
-            demonstrations.features['label'],
-            teacher_description=prompt_descr,
-            remove_label=True
-        )
-        token_data = (tokenizer(context, return_tensors="pt")).to(device)
-        batch_tokens.append(token_data)
-        batch_strings.append(context)
-
-    labels = [datasets['label'][datasets['idx'].index(i)] for i in all_indices]
-    labels = datasets.features['label'].int2str(labels)
-    return batch_tokens, batch_strings, all_indices[:limit],labels[:limit]
