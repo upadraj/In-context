@@ -191,6 +191,58 @@ def create_train_batch_token(
         all_indices.append(samp)            
     return batch_tokens, batch_strings, all_indices, context_indices
 
+def create_hans_train_batch_token(
+    mnli_dataset,
+    rte_dataset,
+    tokenizer,
+    seed,
+    teacher_description="",
+    student_description="Are the following sentences examples of entailment, yes or no?",
+    num_shots=16,
+    device = 'cpu',
+    num_train_samps=128,
+):
+    all_dataset_names = ['mnli','rte']
+    all_datasets = [mnli_dataset['train'], rte_dataset['train']]
+    
+    batch_tokens = []
+    batch_strings = []
+    all_indices = []
+
+    print("hans only works on even training numbers...testing")
+    assert num_train_samps % 2 == 0
+    num_train_samps = num_train_samps // 2 # should be evens
+
+    for dataset_num, datasets in enumerate(all_datasets):
+        dataset_name = all_dataset_names[dataset_num]
+        contexts, context_indices = select_demonstrations(datasets,balanced=True,rand_subset=True,num_shots=num_shots,seed=seed)
+        candidates , candidate_indices = select_demonstrations(datasets,filter_out_idx=context_indices.tolist())
+        candidates_chosen = np.random.choice(candidate_indices,num_train_samps, replace=False).tolist()
+        chosen_candidates , chosen_indices = select_demonstrations(datasets,from_idxlabels=candidates_chosen)
+
+        for samp in candidates_chosen:
+            demonstrations = chosen_candidates.filter(lambda r: r['idx'] == samp)
+            complete_set = concatenate_datasets([contexts,demonstrations])
+            context, student_context = create_few_shot_context(
+                dataset_name,
+                complete_set,
+                complete_set.features['label'],
+                teacher_description=teacher_description,
+                student_description=student_description,
+            )
+            token_data= {
+                'context':(tokenizer(context, return_tensors="pt")).to(device),
+                'query':(tokenizer(student_context, return_tensors="pt")).to(device)
+            }
+            string_data = {
+                'context':context,
+                'query':student_context
+            }
+            batch_tokens.append(token_data)
+            batch_strings.append(string_data)
+            all_indices.append(samp)            
+    return batch_tokens, batch_strings, all_indices, context_indices
+
 def create_validation_batch_token(
     dataset_name,
     datasets,
@@ -212,6 +264,58 @@ def create_validation_batch_token(
     for dx in range(limit):
         context, _ = create_few_shot_context(
             dataset_name,
+            [demonstrations[dx]],
+            demonstrations.features['label'],
+            teacher_description=prompt_descr,
+            remove_label=True
+        )
+        token_data = (tokenizer(context, return_tensors="pt")).to(device)
+        batch_tokens.append(token_data)
+        batch_strings.append(context)
+
+    labels = [datasets['label'][datasets['idx'].index(i)] for i in all_indices]
+    labels = datasets.features['label'].int2str(labels)
+    return batch_tokens, batch_strings, all_indices[:limit],labels[:limit]
+
+def create_paws_qqp_batch_token(
+    datasets,
+    tokenizer,
+    device = 'cpu',
+    prompt_descr="Are the following sentences examples of entailment, yes or no?",
+    limit=128
+):
+    demonstrations, all_indices = select_demonstrations(datasets)
+    batch_tokens = []
+    batch_strings = []
+    for dx in range(limit):
+        context, _ = create_few_shot_context(
+            'paws-qqp',
+            [demonstrations[dx]],
+            demonstrations.features['label'],
+            teacher_description=prompt_descr,
+            remove_label=True
+        )
+        token_data = (tokenizer(context, return_tensors="pt")).to(device)
+        batch_tokens.append(token_data)
+        batch_strings.append(context)
+
+    labels = [datasets['label'][datasets['idx'].index(i)] for i in all_indices]
+    labels = datasets.features['label'].int2str(labels)
+    return batch_tokens, batch_strings, all_indices[:limit],labels[:limit]
+
+def create_hans_batch_token(
+    datasets,
+    tokenizer,
+    device = 'cpu',
+    prompt_descr="Are the following sentences examples of entailment, yes or no?",
+    limit=128
+):
+    demonstrations, all_indices = select_demonstrations(datasets)
+    batch_tokens = []
+    batch_strings = []
+    for dx in range(limit):
+        context, _ = create_few_shot_context(
+            'hans',
             [demonstrations[dx]],
             demonstrations.features['label'],
             teacher_description=prompt_descr,
