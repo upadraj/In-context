@@ -37,9 +37,10 @@ def print_trainable_parameters(model):
         all_param += param.numel()
         if param.requires_grad:
             trainable_params += param.numel()
-    print(
-        f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
-    )
+    # print(
+    #     f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
+    # )
+    return {"trainable params":trainable_params, "all params": all_param}
 
 
 class CastOutputToFloat(torch.nn.Sequential):
@@ -371,6 +372,8 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
         "val_len": val_len,
         "train_len": train_len,
         "context_len": context_len,
+        "params": print_trainable_parameters(student_model),
+
     }
 
     with open(metadata_loc, "w") as f:
