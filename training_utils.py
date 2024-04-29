@@ -50,29 +50,30 @@ class CastOutputToFloat(torch.nn.Sequential):
 
 def get_model(model_name):
     model_name = "facebook/" + model_name
-    config = AutoConfig.from_pretrained(model_name)
-    config.hidden_dropout_prob = 0.1
     tokenizer = AutoTokenizer.from_pretrained(model_name)  # tokenizer
-    teacher_model = OPTForCausalLM.from_pretrained(model_name)  # teacher model
-    student_model = OPTForCausalLM.from_pretrained(
-        model_name, config=config
-    )  # student model
+    model = OPTForCausalLM.from_pretrained(model_name)  # teacher model
+    # student_model = OPTForCausalLM.from_pretrained(
+    #     model_name, config=config
+    # )  # student model
 
-    for param in student_model.parameters():
+    for param in model.parameters():
         param.requires_grad = False
         if param.ndim == 1:
             param.data = param.data.to(torch.float32)
-
-    student_model.gradient_checkpointing_enable()
-    student_model.enable_input_require_grads()
-    student_model.lm_head = CastOutputToFloat(student_model.lm_head)
 
     config = LoraConfig(
         r=16, lora_alpha=32, lora_dropout=0.05, bias="none", task_type="CAUSAL_LM"
     )
 
-    student_model = get_peft_model(student_model, config)
-    return tokenizer, student_model, teacher_model
+    student_model = get_peft_model(model, config)
+
+    student_model.config.hidden_dropout_prob = 0.1
+
+    student_model.gradient_checkpointing_enable()
+    student_model.enable_input_require_grads()
+    student_model.lm_head = CastOutputToFloat(model.lm_head)
+    
+    return tokenizer, student_model, model
 
 
 # Assuming `losses` is the list of epoch losses returned from the `train` function
