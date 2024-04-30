@@ -16,6 +16,7 @@ from context_utils import (
     create_train_batch_token,
     create_hans_batch_token,
     create_paws_qqp_batch_token,
+    create_qqp_validation_batch
 )
 from data_utils import (
     load_hans_dataset,
@@ -307,7 +308,17 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
     )
     print("finished run in-domain val{}".format(seed))
     print("final result", indom_accuracy)
+    
+    print("predicting student model out-domain on validation set of qqp ")
+    qqp_validation_token, val_labels = create_qqp_validation_batch(tokenizer, device, limit=50)
+    prediction = predict(
+        student_model, qqp_validation_token, tokenizer=tokenizer, device=device
+    )
 
+    out_domin = accuracy_score(prediction, val_labels)
+    print("finished run out-domain val{}".format(seed))
+    print("final result", out_domin )
+    
     if dataset_used == "qqp":
         print("predicting on paws_qqp")
         validation_set = "paws_qqp"

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from datasets import load_dataset
 from datasets import concatenate_datasets
 
 from data_utils import task_to_keys
@@ -315,3 +316,43 @@ def create_hans_batch_token(
     labels = [datasets["label"][datasets["idx"].index(i)] for i in all_indices]
     labels = datasets.features["label"].int2str(labels)
     return batch_tokens, batch_strings, all_indices[:limit], labels[:limit]
+
+
+def create_qqp_validation_batch(tokenizer, device, limit=None):
+    qqp_dataset = load_dataset("glue", "qqp")
+    dataset = qqp_dataset['validation']
+    query_dataset= qqp_dataset['train']
+
+    def filter_labels(dataset, label):
+        filtered_list = [data for data in dataset if data['label'] == label]
+        return filtered_list
+
+    label_0_list = filter_labels(dataset, 0)
+
+    label_1_list = filter_labels(dataset, 1)
+
+    res = []
+    val_labels = []
+    if limit  == None:
+        limit = len(label_0_list) 
+        if len(label_1_list) < len(label_0_list):
+            limit = len(label_1_list)
+   
+    for i in range(limit):
+        context1 = label_0_list[i]
+        context2 = label_1_list[i]
+        premises1 = context1["question1"]
+        hypotheses1 = context2["question2"]
+        premises2 = context1["question1"]
+        hypotheses2 = context2["question2"]
+        total_context = f"Premise : {premises1} \nHypothesis: {hypotheses1}\nLabel: no \n"
+        total_context += f"Premise : {premises2} \nHypothesis: {hypotheses2}\nLabel: yes \n"
+        total_context += f"Think logically. Are the following sentences examples of entailment, yes or no? \n"
+        total_context += f"Premise : {query_dataset[i]['question1']} \nHypothesis: {query_dataset[i]['question2']}\nLabel: \n"
+        token_data = (tokenizer(total_context, return_tensors="pt")).to(device)
+        label = 'no'
+        if query_dataset[i]['label'] == 1:
+            label = 'yes'
+        val_labels.append(label)
+        res.append(token_data)
+    return res, val_labels
