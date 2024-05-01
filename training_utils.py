@@ -38,9 +38,6 @@ def print_trainable_parameters(model):
         all_param += param.numel()
         if param.requires_grad:
             trainable_params += param.numel()
-    # print(
-    #     f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
-    # )
     return {"trainable params":trainable_params, "all params": all_param}
 
 
@@ -76,8 +73,6 @@ def get_model(model_name):
     
     return tokenizer, student_model, model
 
-
-# Assuming `losses` is the list of epoch losses returned from the `train` function
 def plot_losses(losses):
     plt.figure(figsize=(10, 5))
     plt.plot(losses, marker="o", linestyle="-", color="b")
@@ -161,7 +156,6 @@ def train(teacher_model, student_model, data, epochs=10, batch_size=32, device="
             batch_loss /= batch_size
             total_loss += batch_loss
             scheduler.step()
-            # print(f"Epoch {epoch + 1}, Batch {i + 1}, Average Loss: {batch_loss}")
 
         # Average loss for the epoch
         epoch_loss = total_loss / num_batches
@@ -171,7 +165,6 @@ def train(teacher_model, student_model, data, epochs=10, batch_size=32, device="
 
     print(f"Total loss : {total_loss/epochs}")
     plot_losses(epoch_losses)
-    # torch.save(student_model, './models/student.pth')
 
 
 def predict(model, source, tokenizer, target=None, device="cpu"):

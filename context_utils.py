@@ -7,7 +7,7 @@ from datasets import concatenate_datasets
 from data_utils import task_to_keys
 
 
-def _select_subset_by_ids(dataset, indices):  # indices is a list or np array here...
+def _select_subset_by_ids(dataset, indices): 
     subset = dataset.select(indices)
     return subset
 
@@ -56,7 +56,6 @@ def _select_random_subset(dataset, num_shots, balanced=False, seed=123):
         # just select a random subset of samples
         indices = np.random.choice(dataset["idx"], size=num_shots, replace=False)
 
-    # return _select_subset_by_ids(dataset, indices), indices
     return _select_subset_by_idx(dataset, indices)
 
 
@@ -93,7 +92,7 @@ def select_demonstrations(
 def create_few_shot_context(
     dataset_name,
     demonstrations,
-    int_to_label_converter,  # dataset.features["label"]
+    int_to_label_converter, 
     teacher_description="",
     student_description="Are the following sentences examples of entailment, yes or no?",
     remove_label=False,
