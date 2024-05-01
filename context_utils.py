@@ -7,7 +7,7 @@ from datasets import concatenate_datasets
 from data_utils import task_to_keys
 
 
-def _select_subset_by_ids(dataset, indices): 
+def _select_subset_by_ids(dataset, indices):
     subset = dataset.select(indices)
     return subset
 
@@ -92,7 +92,7 @@ def select_demonstrations(
 def create_few_shot_context(
     dataset_name,
     demonstrations,
-    int_to_label_converter, 
+    int_to_label_converter,
     teacher_description="",
     student_description="Are the following sentences examples of entailment, yes or no?",
     remove_label=False,
@@ -121,7 +121,7 @@ def create_few_shot_context(
 
     current_shot = len(demonstrations)
     for sample in demonstrations:
-        if dataset_name == 'paws-qqp':
+        if dataset_name == "paws-qqp":
             formated_sample = pattern.format(
                 prefix1="Question1",
                 text1=sample[task_to_keys[dataset_name][0]],
@@ -221,7 +221,7 @@ def create_validation_batch_token(
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
     limit=128,
     shuffle=False,
-    seed=42
+    seed=42,
 ):
     if dataset_name == "mnli":
         split = "validation_matched"
@@ -231,7 +231,9 @@ def create_validation_batch_token(
     datasets = datasets[split]
 
     if shuffle:
-        demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle,seed=seed)
+        demonstrations, all_indices = select_demonstrations(
+            datasets, shuffle=shuffle, seed=seed
+        )
     else:
         demonstrations, all_indices = select_demonstrations(datasets)
     batch_tokens = []
@@ -260,10 +262,12 @@ def create_paws_qqp_batch_token(
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
     limit=128,
     shuffle=False,
-    seed=42
+    seed=42,
 ):
     if shuffle:
-        demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle,seed=seed)
+        demonstrations, all_indices = select_demonstrations(
+            datasets, shuffle=shuffle, seed=seed
+        )
     else:
         demonstrations, all_indices = select_demonstrations(datasets)
     batch_tokens = []
@@ -292,10 +296,12 @@ def create_hans_batch_token(
     prompt_descr="Are the following sentences examples of entailment, yes or no?",
     limit=128,
     shuffle=True,
-    seed=42
+    seed=42,
 ):
     if shuffle:
-        demonstrations, all_indices = select_demonstrations(datasets, shuffle=shuffle,seed=seed)
+        demonstrations, all_indices = select_demonstrations(
+            datasets, shuffle=shuffle, seed=seed
+        )
     else:
         demonstrations, all_indices = select_demonstrations(datasets)
     batch_tokens = []
@@ -319,11 +325,11 @@ def create_hans_batch_token(
 
 def create_qqp_validation_batch(tokenizer, device, limit=None):
     qqp_dataset = load_dataset("glue", "qqp")
-    dataset = qqp_dataset['validation']
-    query_dataset= qqp_dataset['train']
+    dataset = qqp_dataset["validation"]
+    query_dataset = qqp_dataset["train"]
 
     def filter_labels(dataset, label):
-        filtered_list = [data for data in dataset if data['label'] == label]
+        filtered_list = [data for data in dataset if data["label"] == label]
         return filtered_list
 
     label_0_list = filter_labels(dataset, 0)
@@ -332,11 +338,11 @@ def create_qqp_validation_batch(tokenizer, device, limit=None):
 
     res = []
     val_labels = []
-    if limit  == None:
-        limit = len(label_0_list) 
+    if limit == None:
+        limit = len(label_0_list)
         if len(label_1_list) < len(label_0_list):
             limit = len(label_1_list)
-   
+
     for i in range(limit):
         context1 = label_0_list[i]
         context2 = label_1_list[i]
@@ -344,14 +350,18 @@ def create_qqp_validation_batch(tokenizer, device, limit=None):
         hypotheses1 = context2["question2"]
         premises2 = context1["question1"]
         hypotheses2 = context2["question2"]
-        total_context = f"Premise : {premises1} \nHypothesis: {hypotheses1}\nLabel: no \n"
-        total_context += f"Premise : {premises2} \nHypothesis: {hypotheses2}\nLabel: yes \n"
+        total_context = (
+            f"Premise : {premises1} \nHypothesis: {hypotheses1}\nLabel: no \n"
+        )
+        total_context += (
+            f"Premise : {premises2} \nHypothesis: {hypotheses2}\nLabel: yes \n"
+        )
         total_context += f"Think logically. Are the following sentences examples of entailment, yes or no? \n"
         total_context += f"Premise : {query_dataset[i]['question1']} \nHypothesis: {query_dataset[i]['question2']}\nLabel: \n"
         token_data = (tokenizer(total_context, return_tensors="pt")).to(device)
-        label = 'no'
-        if query_dataset[i]['label'] == 1:
-            label = 'yes'
+        label = "no"
+        if query_dataset[i]["label"] == 1:
+            label = "yes"
         val_labels.append(label)
         res.append(token_data)
     return res, val_labels

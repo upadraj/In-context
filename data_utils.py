@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 from datasets import load_dataset, ClassLabel
 
@@ -67,10 +66,6 @@ def load_glue_datasets(task_name):
 
 
 def load_hans_dataset(heuristic="lexical_overlap"):
-    # heuristic = {lexical_overlap, subsequence, constituent}
-    # label = possible values including entailment (0), non-entailment (1)
-
-    subset = "hans"
     raw_datasets = load_dataset("hans", split="validation")
 
     # hans comes without indices, so we add them
@@ -93,7 +88,6 @@ def load_hans_dataset(heuristic="lexical_overlap"):
 
 
 def load_paws_qqp_dataset(path):
-    # TODO(mm): there's probably a better way of doing this
     data_files = {"validation": path}
     dataset = load_dataset("csv", data_files=data_files, sep="\t")
     dataset = dataset["validation"]

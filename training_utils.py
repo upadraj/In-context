@@ -16,13 +16,14 @@ from context_utils import (
     create_train_batch_token,
     create_hans_batch_token,
     create_paws_qqp_batch_token,
-    create_qqp_validation_batch
+    create_qqp_validation_batch,
 )
 from data_utils import (
     load_hans_dataset,
     load_paws_qqp_dataset,
     get_dataset,
 )
+
 
 def set_seed(seed):
     random.seed(seed)
@@ -38,7 +39,7 @@ def print_trainable_parameters(model):
         all_param += param.numel()
         if param.requires_grad:
             trainable_params += param.numel()
-    return {"trainable params":trainable_params, "all params": all_param}
+    return {"trainable params": trainable_params, "all params": all_param}
 
 
 class CastOutputToFloat(torch.nn.Sequential):
@@ -70,8 +71,9 @@ def get_model(model_name):
     student_model.gradient_checkpointing_enable()
     student_model.enable_input_require_grads()
     student_model.lm_head = CastOutputToFloat(model.lm_head)
-    
+
     return tokenizer, student_model, model
+
 
 def plot_losses(losses):
     plt.figure(figsize=(10, 5))
@@ -192,7 +194,7 @@ def get_validation_accuracy(
     val_len=1000,
     shuffle=False,
     indomain=True,
-    seed=42
+    seed=42,
 ):
 
     if indomain:
@@ -218,7 +220,7 @@ def get_validation_accuracy(
                 shuffle=shuffle,
             )
         )
-    elif dataset_used in ["mnli","rte"] and not indomain:
+    elif dataset_used in ["mnli", "rte"] and not indomain:
         student_prompt_tokens, student_prompt_strings, val_indices, val_labels = (
             create_hans_batch_token(
                 datasets,
@@ -227,7 +229,7 @@ def get_validation_accuracy(
                 prompt_descr=student_prompt,
                 limit=val_len,
                 shuffle=shuffle,
-                seed=seed
+                seed=seed,
             )
         )
     else:
@@ -301,17 +303,19 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
     )
     print("finished run in-domain val{}".format(seed))
     print("final result", indom_accuracy)
-    
+
     print("predicting student model out-domain on validation set of qqp ")
-    qqp_validation_token, val_labels = create_qqp_validation_batch(tokenizer, device, limit=50)
+    qqp_validation_token, val_labels = create_qqp_validation_batch(
+        tokenizer, device, limit=50
+    )
     prediction = predict(
         student_model, qqp_validation_token, tokenizer=tokenizer, device=device
     )
 
     out_domin = accuracy_score(prediction, val_labels)
     print("finished run out-domain val{}".format(seed))
-    print("final result", out_domin )
-    
+    print("final result", out_domin)
+
     if dataset_used == "qqp":
         print("predicting on paws_qqp")
         validation_set = "paws_qqp"
@@ -378,7 +382,6 @@ def run_job(dataset_used, model_name, epochs, val_len, train_len, context_len, s
         "train_len": train_len,
         "context_len": context_len,
         "params": print_trainable_parameters(student_model),
-
     }
 
     with open(metadata_loc, "w") as f:
