@@ -19,11 +19,9 @@ Run all code to get model outputs.
 
 ### Interpretation:
 
-More on that later ... 
+The project implements context distillation by training a student model on a KL-divergence loss derived from a teacher model. Additionally, LoRA (Low-Rank Adaptation) is incorporated. 
 
-### Experiments
 
-Create a google spreadsheets for saving experiments results [ experiments spreadsheet](https://docs.google.com/spreadsheets/d/1BLfHYF82zIWzG5Pt61NzQcoxZ8JO8AURXzfixBKN7Ok/edit#gid=0)
 
 ### Models
 
@@ -34,3 +32,8 @@ Create a google spreadsheets for saving experiments results [ experiments spread
 - [facebook/opt-6.7b](https://huggingface.co/facebook/opt-6.7b)
 - [facebook/opt-13b](https://huggingface.co/facebook/opt-13b)
 - [facebook/opt-30b](https://huggingface.co/facebook/opt-30b)
+
+
+### Running the Model in Google Colab
+
+Upload run_models.ipynb notebook and its dependencies (contained in context_utils.py, training_utils.py, and data_utils.py) on Google Colab.
